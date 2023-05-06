@@ -35,7 +35,8 @@ if (IS_LIB) then
     ---@param job2_grade number
     ---@param route boolean
     ---@param visible boolean
-    AddEventHandler(eEvents.BlipLib.Add, function(blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible)
+    ---@param blipType number
+    AddEventHandler(eEvents.BlipLib.Add, function(blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible, blipType)
 
         local resource = GetInvokingResource();
         
@@ -56,7 +57,8 @@ if (IS_LIB) then
                 job2, 
                 job2_grade, 
                 route, 
-                visible
+                visible,
+                blipType
             
             );
         end
@@ -73,7 +75,7 @@ if (IS_LIB) then
 
     end);
 
-    AddEventHandler(eEvents.BlipLib.Update, function(blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible)
+    AddEventHandler(eEvents.BlipLib.Update, function(blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible, handle, blipType)
 
         local resource = GetInvokingResource();
 
@@ -94,7 +96,9 @@ if (IS_LIB) then
                 job2, 
                 job2_grade, 
                 route, 
-                visible
+                visible,
+                handle,
+                blipType
 
             );
         end
@@ -133,7 +137,7 @@ AddEventHandler(eEvents.BlipLib.Show, function(resourceName, blipId)
 end);
 
 ---@param resourceName string
----@param zoneId string
+---@param blipId string
 AddEventHandler(eEvents.BlipLib.Hide, function(resourceName, blipId)
 
     local resource = GetInvokingResource();
@@ -156,6 +160,79 @@ AddEventHandler(eEvents.BlipLib.Hide, function(resourceName, blipId)
 
         end
         
+    end
+
+end);
+
+---@param resourceName string
+---@param blipId string
+AddEventHandler(eEvents.BlipLib.Display, function(resourceName, blipId)
+
+    local resource = GetInvokingResource();
+
+    if (not ENV or resource ~= lib) then return; end -- PREVENT CHEATER CALLING THIS EVENT
+    if (resourceName ~= ENV.name) then return; end
+
+    ---@type Blip
+    local blip = STORED_BLIPS[blipId];
+    
+    if (blip) then
+
+        if (blip.visible) then
+
+            blip:PreloadTextures();
+            blip:AddTitle();
+
+            for i = 1, #blip.data do
+
+                local info = blip.data[i];
+
+                if (info.type == 2) then
+
+                    blip:ShowIcon(
+
+                        info.value.left, 
+                        info.value.right, 
+                        info.value.iconId, 
+                        info.value.iconColor, 
+                        info.value.checked
+
+                    );
+
+                else
+                    blip:ShowText(info.value.left, info.value.right, info.value.type);
+                end
+
+            end
+
+            blip:ShowDisplay(true);
+            blip:UpdateDisplay();
+
+        end
+
+    end
+
+end);
+
+---@param resourceName string
+---@param blipId string
+AddEventHandler(eEvents.BlipLib.Clear, function(resourceName, blipId)
+
+    local resource = GetInvokingResource();
+
+    if (not ENV or resource ~= lib) then return; end -- PREVENT CHEATER CALLING THIS EVENT
+    if (resourceName ~= ENV.name) then return; end
+
+    ---@type Blip
+    local blip = STORED_BLIPS[blipId];
+    
+    if (blip) then
+
+        if (blip.visible) then
+            blip:ClearDisplay();
+            blip:ShowDisplay(false);
+        end
+
     end
 
 end);

@@ -49,10 +49,9 @@ local _EndTextCommandSetBlipName = EndTextCommandSetBlipName;
 ---@field public visible boolean
 ---@field public type string
 ---@overload fun(position: Vector3): Blip
----@overload fun(): Blip
 Blip = Class.new 'Blip';
 
-function Blip:Constructor(position)
+function Blip:Constructor(position, info)
 
     self.id = uuid();
     self.position = position or Vector3(0, 0, 0);
@@ -68,7 +67,7 @@ function Blip:Constructor(position)
     self.job2_grade = nil;
     self.route = false;
     self.visible = false;
-    self.type = "blip";
+    self.type = info or "blip";
 
     STORED_BLIPS[self.id] = self;
     TriggerEvent(eEvents.BlipLib.Add, 
@@ -86,7 +85,8 @@ function Blip:Constructor(position)
         self.job2, 
         self.job2_grade, 
         self.route, 
-        self.visible
+        self.visible,
+        self.type
 
     );
 
@@ -109,7 +109,9 @@ function Blip:SendUpdate()
         self.job2, 
         self.job2_grade, 
         self.route, 
-        self.visible
+        self.visible,
+        self.handle,
+        self.type
 
     );
 end

@@ -30,5 +30,6 @@ if (not ENV.IS_SERVER) then
 
     ENV.require('lib/events.lua', lib);
     ENV.require('classes/Blip.lua', lib);
+    ENV.require('classes/BlipInfo.lua', lib);
 
 end

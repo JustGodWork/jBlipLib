@@ -16,6 +16,8 @@
 jBlipLib = {};
 local blips = {};
 local DEBUG = GetConvar('jClassLib_DEBUG', 'false') == 'true';
+local currentBlip;
+local pause_active = false;
 
 ---@param resourceName string
 ---@param blipId number
@@ -32,7 +34,8 @@ local DEBUG = GetConvar('jClassLib_DEBUG', 'false') == 'true';
 ---@param job2_grade number
 ---@param route boolean
 ---@param visible boolean
-function jBlipLib.AddBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible)
+---@param blipType number
+function jBlipLib.AddBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible, blipType)
     
     blips[resourceName] = blips[resourceName] or {};
     blips[resourceName][blipId] = {
@@ -49,7 +52,8 @@ function jBlipLib.AddBlip(resourceName, blipId, position, sprite, display, color
         job2 = job2,
         job2_grade = job2_grade,
         route = route,
-        visible = visible
+        visible = visible,
+        type = blipType
 
     };
 
@@ -104,7 +108,9 @@ end
 ---@param job2_grade number
 ---@param route boolean
 ---@param visible boolean
-function jBlipLib.UpdateBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible)
+---@param handle number
+---@param blipType number
+function jBlipLib.UpdateBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible, handle, blipType)
     if (Value.IsValid(blips[resourceName], Value.Types.Table)) then
         if (Value.IsValid(blips[resourceName][blipId], Value.Types.Table)) then
 
@@ -122,7 +128,9 @@ function jBlipLib.UpdateBlip(resourceName, blipId, position, sprite, display, co
                 job2 = job2,
                 job2_grade = job2_grade,
                 route = route,
-                visible = visible
+                visible = visible,
+                handle = handle,
+                type = blipType
         
             };
 
@@ -178,6 +186,97 @@ local function PlayerAllowed(job, jobGrade, job2, job2Grade)
     if (not IsJobValid(job, jobGrade) and not IsJobValid(job2, job2Grade)) then return true; end
     return (HasJob("job", job, jobGrade) or HasJob("job2", job2, job2Grade));
 end
+
+---@return table, string
+local function GetBlipInfoByHandle(handle)
+    for resourceName, resourceBlips in pairs(blips) do
+        for blipId, blip in pairs(resourceBlips) do
+            if (blip.type == "info" and blip.handle == handle) then
+                return blip, resourceName;
+            end
+        end
+    end
+end
+
+---@return table, string
+local function GetLastBlip()
+    for resourceName, resourceBlips in pairs(blips) do
+        for blipId, blip in pairs(resourceBlips) do
+            if (blip.type == "info" and blip.handle == currentBlip) then
+                return blip, resourceName;
+            end
+        end
+    end
+end
+
+local function StartInfoThread()
+    CreateThread(function()
+        while pause_active do
+
+            if (IsFrontendReadyForControl()) then
+
+                local _blip = GetNewSelectedMissionCreatorBlip();
+
+                if (IsHoveringOverMissionCreatorBlip()) then
+
+                    if (DoesBlipExist(_blip)) then
+
+                        if (currentBlip ~= _blip) then
+
+                            local oldBlip, oldResource = GetLastBlip();
+
+                            if (oldBlip) then
+                                TriggerEvent(eEvents.BlipLib.Clear, oldResource, oldBlip.id);
+                            end
+
+                            currentBlip = _blip;
+                            TakeControlOfFrontend();
+
+                            local blip, blipResource = GetBlipInfoByHandle(_blip);
+
+                            if (Value.IsValid(blip, Value.Types.Table)) then
+                                
+                                TriggerEvent(eEvents.BlipLib.Display, blipResource, blip.id);
+                                ReleaseControlOfFrontend();
+
+                            end
+
+                        end
+                        
+                    end
+
+                else
+
+                    if (Value.IsValid(currentBlip, Value.Types.Number)) then
+
+                        local blip, resource = GetLastBlip();
+
+                        if (blip) then
+                            TriggerEvent(eEvents.BlipLib.Clear, resource, blip.id);
+                        end
+                        currentBlip = nil;
+
+                    end
+
+                end
+
+            end
+
+            Wait(0);
+
+        end
+    end);
+end
+
+jLib.PauseMenu.StateChange(function(is_active)
+    
+    pause_active = is_active;
+
+    if (pause_active) then
+        StartInfoThread();
+    end
+
+end);
     
 CreateThread(function()
     while true do
@@ -191,7 +290,7 @@ CreateThread(function()
                 for blipId, blip in pairs(resourceBlips) do
 
                     if (ESXReady) then
-                        
+
                         local allowed = PlayerAllowed(blip.job, blip.job_grade, blip.job2, blip.job2_grade);
 
                         if (blip.visible and not allowed) then
