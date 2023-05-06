@@ -18,3 +18,27 @@ local blip = Blip(Vector3(-231.639557, -988.707703, 29.313599))
     :SetSprite(eBlipSprite.GTAOPassive)
     :SetScale(1.0)
     :SetColor(eBlipColor.Color24);
+
+RegisterCommand("blip", function()
+
+    if (blip.visible) then
+        blip:Hide();
+    else
+        blip:Show();
+    end
+
+end);
+
+RegisterCommand("blip_job", function()
+    
+    if (blip.job == "police") then
+        blip:SetJob(nil, nil);
+    else
+        blip:SetJob("police", 2);
+    end
+
+end);
+
+RegisterCommand("blip_force_hide", function()
+    blip:SetForceHide(not blip.force_hide);
+end);
