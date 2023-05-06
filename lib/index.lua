@@ -161,7 +161,7 @@ function jBlipLib.Purge(resourceName)
     blips[resourceName] = nil;
 
     if (DEBUG) then
-        console.debug("^7(^3jBlipLib^7) ^0=> Purged zones from resource: ^1" .. resourceName .. "^0");
+        console.debug("^7(^3jBlipLib^7) ^0=> Purged blips from resource: ^1" .. resourceName .. "^0");
     end
 
 end
