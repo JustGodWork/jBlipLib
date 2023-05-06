@@ -35,7 +35,8 @@ if (IS_LIB) then
     ---@param job2_grade number
     ---@param route boolean
     ---@param visible boolean
-    AddEventHandler(eEvents.BlipLib.Add, function(blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible)
+    ---@param force_hide boolean
+    AddEventHandler(eEvents.BlipLib.Add, function(blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible, force_hide)
 
         local resource = GetInvokingResource();
         
@@ -56,7 +57,8 @@ if (IS_LIB) then
                 job2, 
                 job2_grade, 
                 route, 
-                visible
+                visible,
+                force_hide
             
             );
         end
@@ -97,6 +99,16 @@ if (IS_LIB) then
                 visible
 
             );
+        end
+
+    end);
+
+    AddEventHandler(eEvents.BlipLib.UpdateSingle, function(blipId, key, value)
+
+        local resource = GetInvokingResource();
+
+        if (IS_LIB) then
+            jBlipLib.SetValue(resource, blipId, key, value);
         end
 
     end);

@@ -32,7 +32,8 @@ local DEBUG = GetConvar('jClassLib_DEBUG', 'false') == 'true';
 ---@param job2_grade number
 ---@param route boolean
 ---@param visible boolean
-function jBlipLib.AddBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible)
+---@param force_hide boolean
+function jBlipLib.AddBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible, force_hide)
     
     blips[resourceName] = blips[resourceName] or {};
     blips[resourceName][blipId] = {
@@ -49,7 +50,8 @@ function jBlipLib.AddBlip(resourceName, blipId, position, sprite, display, color
         job2 = job2,
         job2_grade = job2_grade,
         route = route,
-        visible = visible
+        visible = visible,
+        force_hide = force_hide
 
     };
 
@@ -104,7 +106,8 @@ end
 ---@param job2_grade number
 ---@param route boolean
 ---@param visible boolean
-function jBlipLib.UpdateBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible)
+---@param force_hide boolean
+function jBlipLib.UpdateBlip(resourceName, blipId, position, sprite, display, color, scale, range, label, job, job_grade, job2, job2_grade, route, visible, force_hide)
     if (Value.IsValid(blips[resourceName], Value.Types.Table)) then
         if (Value.IsValid(blips[resourceName][blipId], Value.Types.Table)) then
 
@@ -122,12 +125,31 @@ function jBlipLib.UpdateBlip(resourceName, blipId, position, sprite, display, co
                 job2 = job2,
                 job2_grade = job2_grade,
                 route = route,
-                visible = visible
+                visible = visible,
+                force_hide = force_hide
         
             };
 
             if (DEBUG) then
                 console.debug("^7(^3jBlipLib^7) ^0=> Updated blip: ^1" .. blipId .. "^0 from resource: ^1" .. resourceName .. "^0");
+            end
+
+        end
+    end
+end
+
+---@param resourceName string
+---@param blipId number
+---@param key string
+---@param value any
+function jBlipLib.SetValue(resourceName, blipId, key, value)
+    if (Value.IsValid(blips[resourceName], Value.Types.Table)) then
+        if (Value.IsValid(blips[resourceName][blipId], Value.Types.Table)) then
+
+            blips[resourceName][blipId][key] = value;
+
+            if (DEBUG) then
+                console.debug("^7(^3jBlipLib^7) ^0=> Updated blip: ^1" .. blipId .. "^0 ^7( ^0key: ^1" .. key .. " ^0value: ^1" .. tostring(value) .. "^7)^0 from resource: ^1" .. resourceName .. "^0");
             end
 
         end
@@ -189,22 +211,18 @@ CreateThread(function()
             if (Value.IsValid(resourceBlips, Value.Types.Table)) then
 
                 for blipId, blip in pairs(resourceBlips) do
-
-                    if (ESXReady) then
                         
-                        local allowed = PlayerAllowed(blip.job, blip.job_grade, blip.job2, blip.job2_grade);
+                    local allowed = ESXReady and PlayerAllowed(blip.job, blip.job_grade, blip.job2, blip.job2_grade) or (not ESXReady and true);
 
-                        if (blip.visible and not allowed) then
+                    if ( (blip.visible and not allowed) or (blip.visible and allowed and blip.force_hide) ) then
 
-                            blip.visible = false;
-                            TriggerEvent(eEvents.BlipLib.Hide, resourceName, blipId);
+                        blip.visible = false;
+                        TriggerEvent(eEvents.BlipLib.Hide, resourceName, blipId);
 
-                        elseif (not blip.visible and allowed) then
+                    elseif (not blip.visible and allowed and not blip.force_hide) then
 
-                            blip.visible = true;
-                            TriggerEvent(eEvents.BlipLib.Show, resourceName, blipId);
-
-                        end
+                        blip.visible = true;
+                        TriggerEvent(eEvents.BlipLib.Show, resourceName, blipId);
 
                     end
 

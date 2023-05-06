@@ -69,6 +69,7 @@ function Blip:Constructor(position)
     self.route = false;
     self.visible = false;
     self.type = "blip";
+    self.force_hide = false;
 
     STORED_BLIPS[self.id] = self;
     TriggerEvent(eEvents.BlipLib.Add, 
@@ -86,32 +87,41 @@ function Blip:Constructor(position)
         self.job2, 
         self.job2_grade, 
         self.route, 
-        self.visible
+        self.visible,
+        self.force_hide
 
     );
 
 end
 
 ---@private
-function Blip:SendUpdate()
-    TriggerEvent(eEvents.BlipLib.Update, 
+---@param key string
+---@param value any
+function Blip:SendUpdate(key, value)
 
-        self.id, 
-        self.position, 
-        self.sprite, 
-        self.display, 
-        self.color, 
-        self.scale, 
-        self.range, 
-        self.label, 
-        self.job, 
-        self.job_grade, 
-        self.job2, 
-        self.job2_grade, 
-        self.route, 
-        self.visible
+    if (Value.IsString(key)) then
+        TriggerEvent(eEvents.BlipLib.UpdateSingle, self.id, key, value);
+    else
+        TriggerEvent(eEvents.BlipLib.Update, 
 
-    );
+            self.id, 
+            self.position, 
+            self.sprite, 
+            self.display, 
+            self.color, 
+            self.scale, 
+            self.range, 
+            self.label, 
+            self.job, 
+            self.job_grade, 
+            self.job2, 
+            self.job2_grade, 
+            self.route, 
+            self.visible,
+            self.force_hide
+
+        );
+    end
 end
 
 ---Show the blip in game
@@ -130,7 +140,7 @@ function Blip:Show()
         _EndTextCommandSetBlipName(self.handle);
         _SetBlipRoute(self.handle, self.route);
         self:SetVisible(true);
-        self:SendUpdate();
+        self:SendUpdate("handle", self.handle);
     end
     return self;
 end
@@ -140,7 +150,8 @@ end
 function Blip:SetJob(job, grade)
     self.job = job;
     self.job_grade = grade;
-    self:SendUpdate();
+    self:SendUpdate("job", self.job);
+    self:SendUpdate("job_grade", self.job_grade);
     return self;
 end
 
@@ -149,7 +160,15 @@ end
 function Blip:SetJob2(job2, grade)
     self.job2 = job2;
     self.job2_grade = grade;
-    self:SendUpdate();
+    self:SendUpdate("job2", self.job2);
+    self:SendUpdate("job2_grade", self.job2_grade);
+    return self;
+end
+
+---@param force_hide boolean
+function Blip:SetForceHide(force_hide)
+    self.force_hide = force_hide;
+    self:SendUpdate("force_hide", self.force_hide);
     return self;
 end
 
@@ -184,6 +203,7 @@ end
 ---@param bool boolean
 function Blip:SetVisible(bool)
     self.visible = bool;
+    self:SendUpdate("visible", self.visible);
     return self;
 end
 
@@ -194,6 +214,7 @@ function Blip:SetPosition(position)
         _SetBlipCoords(self.handle, position.x, position.y, position.z);
         self:Update();
     end
+    self:SendUpdate("position", self.position);
     return self;
 end
 
@@ -204,6 +225,7 @@ function Blip:SetRoute(toggle)
         _SetBlipRoute(self.handle, toggle);
         self:Update();
     end
+    self:SendUpdate("route", self.route);
     return self;
 end
 
@@ -227,6 +249,7 @@ function Blip:SetDisplay(display)
         _SetBlipDisplay(self.handle, display);
         self:Update();
     end
+    self:SendUpdate("display", self.display);
     return self;
 end
 
@@ -237,6 +260,7 @@ function Blip:SetColor(color)
         _SetBlipColour(self.handle, color);
         self:Update();
     end
+    self:SendUpdate("color", self.color);
     return self;
 end
 
@@ -247,6 +271,7 @@ function Blip:SetSprite(sprite)
         _SetBlipSprite(self.handle, sprite);
         self:Update();
     end
+    self:SendUpdate("sprite", self.sprite);
     return self;
 end
 
@@ -257,6 +282,7 @@ function Blip:SetScale(scale)
         _SetBlipScale(self.handle, scale);
         self:Update();
     end
+    self:SendUpdate("scale", self.scale);
     return self;
 end
 
@@ -268,6 +294,7 @@ function Blip:SetHasShortRange(range)
         _SetBlipAsShortRange(self.handle, range);
         self:Update();
     end
+    self:SendUpdate("range", self.range);
     return self;
 end
 
@@ -281,5 +308,6 @@ function Blip:SetLabel(label)
         _EndTextCommandSetBlipName(self.handle);
         self:Update();
     end
+    self:SendUpdate("label", self.label);
     return self;
 end
