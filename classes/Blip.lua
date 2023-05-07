@@ -54,7 +54,7 @@ Blip = Class.new 'Blip';
 
 function Blip:Constructor(position)
 
-    self.id = uuid();
+    self.id = jCLib.uuid();
     self.position = position or Vector3(0, 0, 0);
     self.sprite = 1;
     self.display = 2;
